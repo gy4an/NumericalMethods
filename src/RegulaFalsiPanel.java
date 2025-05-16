@@ -6,6 +6,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import javax.swing.table.DefaultTableModel;
 
+
 public class RegulaFalsiPanel extends JPanel {
     private JTextField equationField, aField, bField, tolField;
     private JTable resultTable;
@@ -22,9 +23,9 @@ public class RegulaFalsiPanel extends JPanel {
 
         inputPanel.add(new JLabel("f(x) ="));
         inputPanel.add(equationField);
-        inputPanel.add(new JLabel("a:"));
+        inputPanel.add(new JLabel("x0:"));
         inputPanel.add(aField);
-        inputPanel.add(new JLabel("b:"));
+        inputPanel.add(new JLabel("x1:"));
         inputPanel.add(bField);
         inputPanel.add(new JLabel("Tolerance:"));
         inputPanel.add(tolField);
@@ -34,7 +35,7 @@ public class RegulaFalsiPanel extends JPanel {
 
         add(inputPanel, BorderLayout.NORTH);
 
-        tableModel = new DefaultTableModel(new Object[]{"Iteration", "a", "b", "c", "f(c)"}, 0);
+        tableModel = new DefaultTableModel(new Object[]{"Iteration", "x0", "x1", "x2", "f(x2)"}, 0);
         resultTable = new JTable(tableModel);
         add(new JScrollPane(resultTable), BorderLayout.CENTER);
 
