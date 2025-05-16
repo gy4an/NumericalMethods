@@ -34,7 +34,7 @@ public class RegulaFalsiPanel extends JPanel {
 
         add(inputPanel, BorderLayout.NORTH);
 
-        tableModel = new DefaultTableModel(new Object[]{"Iteration", "X0", "X1", "X2", "f(X2)"}, 0);
+        tableModel = new DefaultTableModel(new Object[]{"Iteration", "X0", "X1", "X2", "f(X2)", "Ea"}, 0);
         resultTable = new JTable(tableModel);
         add(new JScrollPane(resultTable), BorderLayout.CENTER);
 
@@ -72,6 +72,7 @@ public class RegulaFalsiPanel extends JPanel {
             int maxIter = 100;
             double c = a;
             double fc = 0;
+            double prevC = 0;
 
             for (int i = 1; i <= maxIter; i++) {
                 double fa = evaluate(expr, a);
@@ -85,21 +86,37 @@ public class RegulaFalsiPanel extends JPanel {
                 c = (a * fb - b * fa) / (fb - fa);
                 fc = evaluate(expr, c);
 
+                double ea;
+                if (i == 1) {
+                    ea = 0;
+                } else {
+                    ea = Math.abs((c) - (prevC));
+                }
+
+                String eaDisplay;
+                if (i == 1) {
+                    eaDisplay = "";
+                } else {
+                    eaDisplay = String.valueOf(round(ea, decimals));
+                }
+
                 tableModel.addRow(new Object[]{
                         i,
                         round(a, decimals),
                         round(b, decimals),
                         round(c, decimals),
-                        round(fc, decimals)
+                        round(fc, decimals),
+                        eaDisplay
                 });
 
-                if (Math.abs(fc) < tol) break;
+                if (Math.abs(fc) <= tol) break;
 
                 if (fa * fc < 0) {
                     b = c;
                 } else {
                     a = c;
                 }
+                prevC = c;
             }
 
             resultLabel.setText("Estimated root: " + round(c, decimals)); // <- show result
