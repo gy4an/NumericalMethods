@@ -1,9 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
 import javax.swing.table.DefaultTableModel;
 
 public class RegulaFalsiPanel extends JPanel {
@@ -38,31 +35,26 @@ public class RegulaFalsiPanel extends JPanel {
         resultTable = new JTable(tableModel);
         add(new JScrollPane(resultTable), BorderLayout.CENTER);
 
-        computeButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                computeRegulaFalsi();
-            }
-        });
+        computeButton.addActionListener(e -> computeRegulaFalsi());
     }
 
     private void computeRegulaFalsi() {
         tableModel.setRowCount(0);
         try {
-            String expr = equationField.getText();
+            String expr = equationField.getText().trim();
             double a = Double.parseDouble(aField.getText());
             double b = Double.parseDouble(bField.getText());
             double tol = Double.parseDouble(tolField.getText());
 
-            ScriptEngine engine = new ScriptEngineManager().getEngineByName("JavaScript");
-
             int maxIter = 100;
             double c = a;
+
             for (int i = 1; i <= maxIter; i++) {
-                double fa = evaluate(engine, expr, a);
-                double fb = evaluate(engine, expr, b);
+                double fa = evaluate(expr, a);
+                double fb = evaluate(expr, b);
 
                 c = (a * fb - b * fa) / (fb - fa);
-                double fc = evaluate(engine, expr, c);
+                double fc = evaluate(expr, c);
 
                 tableModel.addRow(new Object[]{i, a, b, c, fc});
 
@@ -73,12 +65,13 @@ public class RegulaFalsiPanel extends JPanel {
                 else
                     a = c;
             }
+
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Invalid input or equation: " + ex.getMessage());
         }
     }
 
-    private double evaluate(ScriptEngine engine, String expr, double x) throws ScriptException {
-        return ((Number) engine.eval(expr.replace("x", "(" + x + ")"))).doubleValue();
+    private double evaluate(String expr, double x) {
+        return SimpleMathEvaluator.evaluate(expr, x);
     }
 }
