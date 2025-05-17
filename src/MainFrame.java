@@ -14,7 +14,7 @@ public class MainFrame extends JFrame {
         tabbedPane.add("Cholesky’s Method", new CholeskyPanel());
         tabbedPane.add("Gauss-Jacobi", new GaussJacobiPanel());
         tabbedPane.add("Trapezoidal Rule", new TrapezoidalPanel());
-        tabbedPane.add("Simpson 1/8 Rule", new SimpsonPanel());
+        tabbedPane.add("Simpson 3/8 Rule", new SimpsonPanel());
 
         add(tabbedPane, BorderLayout.CENTER);
         setVisible(true);

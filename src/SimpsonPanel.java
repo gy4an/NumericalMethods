@@ -8,17 +8,21 @@ public class SimpsonPanel extends JPanel {
     private JTextField functionField, aField, bField, nField;
     private JTable resultTable;
     private DefaultTableModel tableModel;
-    private JLabel resultLabel;
+    private JLabel resultLabel, hLabel;
 
     public SimpsonPanel() {
         setLayout(new BorderLayout());
 
         // Inputs
         JPanel inputPanel = new JPanel(new GridLayout(5, 2));
-        functionField = new JTextField("sin(x)");
+        functionField = new JTextField("0.2 + 5x - 200x^2 + 675x^3 - 900x^4 + 400x^5");
         aField = new JTextField("0");
-        bField = new JTextField("3.14");
+        bField = new JTextField("0.8");
         nField = new JTextField("6"); // Must be multiple of 3
+
+        hLabel = new JLabel("h: ");
+        hLabel.setHorizontalAlignment(SwingConstants.LEFT);
+        hLabel.setFont(new Font("Arial", Font.BOLD, 14));
 
         inputPanel.add(new JLabel("Function f(x):"));
         inputPanel.add(functionField);
@@ -30,13 +34,13 @@ public class SimpsonPanel extends JPanel {
         inputPanel.add(nField);
 
         JButton computeButton = new JButton("Compute");
-        inputPanel.add(new JLabel());
+        inputPanel.add(hLabel);
         inputPanel.add(computeButton);
 
         add(inputPanel, BorderLayout.NORTH);
 
-        // Table
-        tableModel = new DefaultTableModel(new Object[]{"i", "x_i", "f(x_i)"}, 0);
+        // Table with updated columns
+        tableModel = new DefaultTableModel(new Object[]{"i", "xᵢ", "Multiplier", "f(xᵢ)"}, 0);
         resultTable = new JTable(tableModel);
         add(new JScrollPane(resultTable), BorderLayout.CENTER);
 
@@ -64,8 +68,15 @@ public class SimpsonPanel extends JPanel {
                 return;
             }
 
+            // Preprocess function string for implicit multiplication
+            func = func.replaceAll("(?<=[0-9])(?=x)", "*x");  // 5x → 5*x
+            func = func.replaceAll("(?<=x)(?=[0-9a-zA-Z])", "*"); // x2 → x*2
+            func = func.replaceAll("(?<=\\))(?=x)", ")*x");   // )x → )*x
+            func = func.replaceAll("(?<=\\d)(?=\\()", "*");   // 2(x) → 2*(x)
+            func = func.replaceAll("(?<=x)(?=\\()", "*");     // x( → x*(
+
             Expression expression = new ExpressionBuilder(func)
-                    .variables("x")
+                    .variable("x")
                     .build();
 
             double h = (b - a) / n;
@@ -75,19 +86,28 @@ public class SimpsonPanel extends JPanel {
                 double x = a + i * h;
                 double fx = expression.setVariable("x", x).evaluate();
 
-                tableModel.addRow(new Object[]{i, String.format("%.5f", x), String.format("%.5f", fx)});
-
+                int multiplier;
                 if (i == 0 || i == n) {
-                    sum += fx;
+                    multiplier = 1;
                 } else if (i % 3 == 0) {
-                    sum += 2 * fx;
+                    multiplier = 2;
                 } else {
-                    sum += 3 * fx;
+                    multiplier = 3;
                 }
+
+                sum += multiplier * fx;
+
+                tableModel.addRow(new Object[]{
+                        "x" + i,
+                        String.format("%.5f", x),
+                        multiplier,
+                        String.format("%.5f", fx),
+                });
             }
 
             double result = (3 * h / 8) * sum;
-            resultLabel.setText(String.format("✅ Approximate Integral: %.6f", result));
+            hLabel.setText(String.format("h: %.6f", h));
+            resultLabel.setText(String.format("Approximate Integral: %.6f", result));
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
