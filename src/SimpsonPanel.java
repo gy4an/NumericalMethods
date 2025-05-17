@@ -1,21 +1,24 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptEngine;
+import javax.swing.table.DefaultTableModel;
+import net.objecthunter.exp4j.Expression;
+import net.objecthunter.exp4j.ExpressionBuilder;
 
 public class SimpsonPanel extends JPanel {
     private JTextField functionField, aField, bField, nField;
-    private JTextArea resultArea;
+    private JTable resultTable;
+    private DefaultTableModel tableModel;
+    private JLabel resultLabel;
 
     public SimpsonPanel() {
         setLayout(new BorderLayout());
 
+        // Inputs
         JPanel inputPanel = new JPanel(new GridLayout(5, 2));
-        functionField = new JTextField("Math.sin(x)");
+        functionField = new JTextField("sin(x)");
         aField = new JTextField("0");
         bField = new JTextField("3.14");
-        nField = new JTextField("6"); // Multiple of 3
+        nField = new JTextField("6"); // Must be multiple of 3
 
         inputPanel.add(new JLabel("Function f(x):"));
         inputPanel.add(functionField);
@@ -27,40 +30,52 @@ public class SimpsonPanel extends JPanel {
         inputPanel.add(nField);
 
         JButton computeButton = new JButton("Compute");
-        computeButton.addActionListener(e -> computeSimpson());
+        inputPanel.add(new JLabel());
         inputPanel.add(computeButton);
 
-        resultArea = new JTextArea(15, 50);
-        resultArea.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(resultArea);
-
         add(inputPanel, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
+
+        // Table
+        tableModel = new DefaultTableModel(new Object[]{"i", "x_i", "f(x_i)"}, 0);
+        resultTable = new JTable(tableModel);
+        add(new JScrollPane(resultTable), BorderLayout.CENTER);
+
+        // Result label
+        resultLabel = new JLabel("Approximate Integral: ");
+        resultLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        resultLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        add(resultLabel, BorderLayout.SOUTH);
+
+        computeButton.addActionListener(e -> computeSimpson());
     }
 
     private void computeSimpson() {
+        tableModel.setRowCount(0); // clear table
+        resultLabel.setText("Approximate Integral: ");
+
         try {
             double a = Double.parseDouble(aField.getText());
             double b = Double.parseDouble(bField.getText());
             int n = Integer.parseInt(nField.getText());
-            String func = functionField.getText();
+            String func = functionField.getText().trim();
 
-            if (n % 3 != 0) {
-                resultArea.setText("n must be a multiple of 3 for Simpson's 1/8 Rule.");
+            if (n <= 0 || n % 3 != 0 || a >= b) {
+                JOptionPane.showMessageDialog(this, "n must be a positive multiple of 3 and a < b.");
                 return;
             }
+
+            Expression expression = new ExpressionBuilder(func)
+                    .variables("x")
+                    .build();
 
             double h = (b - a) / n;
             double sum = 0.0;
 
-            ScriptEngine engine = new ScriptEngineManager().getEngineByName("JavaScript");
-
-            resultArea.setText("x\tf(x)\n");
             for (int i = 0; i <= n; i++) {
                 double x = a + i * h;
-                engine.put("x", x);
-                double fx = ((Number) engine.eval(func)).doubleValue();
-                resultArea.append(String.format("%.5f\t%.5f\n", x, fx));
+                double fx = expression.setVariable("x", x).evaluate();
+
+                tableModel.addRow(new Object[]{i, String.format("%.5f", x), String.format("%.5f", fx)});
 
                 if (i == 0 || i == n) {
                     sum += fx;
@@ -72,9 +87,10 @@ public class SimpsonPanel extends JPanel {
             }
 
             double result = (3 * h / 8) * sum;
-            resultArea.append("\nApproximate Integral: " + result);
+            resultLabel.setText(String.format("✅ Approximate Integral: %.6f", result));
+
         } catch (Exception ex) {
-            resultArea.setText("Error: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
         }
     }
 }
