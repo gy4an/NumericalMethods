@@ -15,7 +15,7 @@ public class SimpsonPanel extends JPanel {
 
         // Inputs
         JPanel inputPanel = new JPanel(new GridLayout(5, 2));
-        functionField = new JTextField("3x^2 + 2x + 1");
+        functionField = new JTextField("3x^2 + 2x + 1\n");
         aField = new JTextField("0");
         bField = new JTextField("1");
         nField = new JTextField("6"); // Must be multiple of 3
