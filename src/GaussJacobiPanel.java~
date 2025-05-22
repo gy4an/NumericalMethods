@@ -10,30 +10,28 @@ public class GaussJacobiPanel extends JPanel {
     private JButton computeBtn;
 
     public GaussJacobiPanel() {
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(10, 10));
 
-        // Top panel with two columns
+        // Top panel: two columns with GridBagLayout
         JPanel topPanel = new JPanel(new GridBagLayout());
+        topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
 
-        // Left column - labels
+        // Labels column
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
         topPanel.add(new JLabel("x1 ="), gbc);
         gbc.gridy++;
         topPanel.add(new JLabel("x2 ="), gbc);
         gbc.gridy++;
         topPanel.add(new JLabel("x3 ="), gbc);
-        gbc.gridy++;
-        topPanel.add(new JLabel("Ea ≤ 0.0001"), gbc);
 
-        // Right column - inputs and button
+        // Text fields column
         gbc.gridx = 1;
         gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
         expr1 = new JTextField("(11 + 2*x2 - x3) / 6");
         expr1.setPreferredSize(new Dimension(250, 25));
         topPanel.add(expr1, gbc);
@@ -48,16 +46,17 @@ public class GaussJacobiPanel extends JPanel {
         expr3.setPreferredSize(new Dimension(250, 25));
         topPanel.add(expr3, gbc);
 
+        // Compute button aligned right below inputs
         gbc.gridy++;
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.EAST;
         computeBtn = new JButton("Compute");
         computeBtn.setPreferredSize(new Dimension(100, 30));
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.EAST;
         topPanel.add(computeBtn, gbc);
 
         add(topPanel, BorderLayout.NORTH);
 
-        // Output area
+        // Output area with scroll
         outputArea = new JTextArea(20, 70);
         outputArea.setEditable(false);
         outputArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
@@ -65,14 +64,13 @@ public class GaussJacobiPanel extends JPanel {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         add(scrollPane, BorderLayout.CENTER);
 
-        // Button action
         computeBtn.addActionListener(e -> computeGaussJacobi());
     }
 
     private void computeGaussJacobi() {
         try {
+            // Stopping rule error <= 0.0001
             double x1 = 0, x2 = 0, x3 = 0;
-
             Expression exprX1 = new ExpressionBuilder(expr1.getText())
                     .variables("x1", "x2", "x3").build();
             Expression exprX2 = new ExpressionBuilder(expr2.getText())
@@ -81,15 +79,13 @@ public class GaussJacobiPanel extends JPanel {
                     .variables("x1", "x2", "x3").build();
 
             StringBuilder result = new StringBuilder();
-
             result.append(String.format("%-6s%-10s%-10s%-10s%-10s%-10s%-10s%-12s%-12s%-12s%n",
                     "Iter", "x1", "x2", "x3", "x1'", "x2'", "x3'", "Ea_x1 (%)", "Ea_x2 (%)", "Ea_x3 (%)"));
 
-            int i = 1;
+            int iteration = 0;
             while (true) {
-                double oldX1 = x1;
-                double oldX2 = x2;
-                double oldX3 = x3;
+                iteration++;
+                double oldX1 = x1, oldX2 = x2, oldX3 = x3;
 
                 double newX1 = exprX1.setVariable("x1", oldX1).setVariable("x2", oldX2).setVariable("x3", oldX3).evaluate();
                 double newX2 = exprX2.setVariable("x1", oldX1).setVariable("x2", oldX2).setVariable("x3", oldX3).evaluate();
@@ -100,18 +96,13 @@ public class GaussJacobiPanel extends JPanel {
                 double ea_x3 = (newX3 != 0) ? Math.abs((newX3 - oldX3) / newX3) * 100 : 0;
 
                 result.append(String.format("%-6d%-10.6f%-10.6f%-10.6f%-10.6f%-10.6f%-10.6f%-12.6f%-12.6f%-12.6f%n",
-                        i, oldX1, oldX2, oldX3, newX1, newX2, newX3, ea_x1, ea_x2, ea_x3));
+                        iteration, oldX1, oldX2, oldX3, newX1, newX2, newX3, ea_x1, ea_x2, ea_x3));
 
-                x1 = newX1;
-                x2 = newX2;
-                x3 = newX3;
+                x1 = newX1; x2 = newX2; x3 = newX3;
 
-                if (ea_x1 <= 0.0001 && ea_x2 <= 0.0001 && ea_x3 <= 0.0001) {
-                    break;
-                }
-
-                if (i++ > 1000) {  // Just a safety stop if it doesn't converge
-                    result.append("\nStopped after 1000 iterations (no convergence).\n");
+                if (ea_x1 <= 0.0001 && ea_x2 <= 0.0001 && ea_x3 <= 0.0001) break;
+                if (iteration > 100) {
+                    result.append("\nStopped after 100 iterations.\n");
                     break;
                 }
             }
@@ -122,7 +113,6 @@ public class GaussJacobiPanel extends JPanel {
             result.append(String.format("𝒙₃ = %.6f%n", x3));
 
             outputArea.setText(result.toString());
-
         } catch (Exception ex) {
             outputArea.setText("Error: " + ex.getMessage());
         }

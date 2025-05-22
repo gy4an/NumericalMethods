@@ -1,8 +1,9 @@
-import javax.swing.*;
-import java.awt.*;
-import javax.swing.table.DefaultTableModel;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 
 public class SimpsonPanel extends JPanel {
     private JTextField functionField, aField, bField, nField;
@@ -40,7 +41,7 @@ public class SimpsonPanel extends JPanel {
         add(inputPanel, BorderLayout.NORTH);
 
         // Table with updated columns
-        tableModel = new DefaultTableModel(new Object[]{"i", "x", "f(x)", "Multiplier", "f(xᵢ)"}, 0);
+        tableModel = new DefaultTableModel(new Object[]{"Intervals", "x", "f(x)", "Multiplier", "f(xᵢ)"}, 0);
         resultTable = new JTable(tableModel);
         add(new JScrollPane(resultTable), BorderLayout.CENTER);
 

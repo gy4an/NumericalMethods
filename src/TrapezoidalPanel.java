@@ -1,18 +1,21 @@
+import net.objecthunter.exp4j.Expression;
+import net.objecthunter.exp4j.ExpressionBuilder;
+
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.*;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptEngine;
 
 public class TrapezoidalPanel extends JPanel {
     private JTextField functionField, aField, bField, nField;
-    private JTextArea resultArea;
+    private JTable resultTable;
+    private DefaultTableModel tableModel;
+    private JLabel resultLabel;
 
     public TrapezoidalPanel() {
         setLayout(new BorderLayout());
 
         JPanel inputPanel = new JPanel(new GridLayout(5, 2));
-        functionField = new JTextField("Math.sin(x)");
+        functionField = new JTextField("sin(x)"); // use exp4j syntax, no Math.sin()
         aField = new JTextField("0");
         bField = new JTextField("3.14");
         nField = new JTextField("10");
@@ -30,44 +33,65 @@ public class TrapezoidalPanel extends JPanel {
         computeButton.addActionListener(e -> computeTrapezoidal());
         inputPanel.add(computeButton);
 
-        resultArea = new JTextArea(15, 50);
-        resultArea.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(resultArea);
-
         add(inputPanel, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
+
+        // Table model and JTable setup
+        tableModel = new DefaultTableModel(new Object[]{"Intervals", "x", "f(x)", "Multiplier", "f(xᵢ)"}, 0);
+        resultTable = new JTable(tableModel);
+        add(new JScrollPane(resultTable), BorderLayout.CENTER);
+
+        // Result label for final integral value
+        resultLabel = new JLabel("Approximate Integral: ");
+        resultLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        resultLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        add(resultLabel, BorderLayout.SOUTH);
     }
 
     private void computeTrapezoidal() {
+        tableModel.setRowCount(0); // clear table
+        resultLabel.setText("Approximate Integral: ");
+
         try {
             double a = Double.parseDouble(aField.getText());
             double b = Double.parseDouble(bField.getText());
             int n = Integer.parseInt(nField.getText());
-            String func = functionField.getText();
+            String func = functionField.getText().trim();
+
+            func = func.replace("ln(", "log(");
+
+            if (n <= 0 || a >= b) {
+                JOptionPane.showMessageDialog(this, "Please enter valid inputs: n > 0 and a < b.");
+                return;
+            }
 
             double h = (b - a) / n;
             double sum = 0.0;
 
-            ScriptEngine engine = new ScriptEngineManager().getEngineByName("JavaScript");
+            Expression expression = new ExpressionBuilder(func)
+                    .variable("x")
+                    .build();
 
-            resultArea.setText("x\tf(x)\n");
             for (int i = 0; i <= n; i++) {
                 double x = a + i * h;
-                engine.put("x", x);
-                double fx = ((Number) engine.eval(func)).doubleValue();
-                resultArea.append(String.format("%.5f\t%.5f\n", x, fx));
+                double fx = expression.setVariable("x", x).evaluate();
 
-                if (i == 0 || i == n) {
-                    sum += fx;
-                } else {
-                    sum += 2 * fx;
-                }
+                int multiplier = (i == 0 || i == n) ? 1 : 2;
+                sum += multiplier * fx;
+
+                tableModel.addRow(new Object[]{
+                        i,
+                        String.format("%.5f", x),
+                        String.format("%.5f", fx),
+                        multiplier,
+                        String.format("%.5f", multiplier * fx)
+                });
             }
 
             double result = (h / 2) * sum;
-            resultArea.append("\nApproximate Integral: " + result);
+            resultLabel.setText(String.format("Approximate Integral: %.6f", result));
+
         } catch (Exception ex) {
-            resultArea.setText("Error: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
         }
     }
 }
