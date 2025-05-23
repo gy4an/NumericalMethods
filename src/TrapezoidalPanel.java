@@ -15,7 +15,7 @@ public class TrapezoidalPanel extends JPanel {
         setLayout(new BorderLayout());
 
         JPanel inputPanel = new JPanel(new GridLayout(5, 2));
-        functionField = new JTextField("sin(x)"); // use exp4j syntax, no Math.sin()
+        functionField = new JTextField("sin(x)"); // use exp4j syntax
         aField = new JTextField("0");
         bField = new JTextField("3.14");
         nField = new JTextField("10");
@@ -31,6 +31,7 @@ public class TrapezoidalPanel extends JPanel {
 
         JButton computeButton = new JButton("Compute");
         computeButton.addActionListener(e -> computeTrapezoidal());
+        inputPanel.add(new JLabel("")); // Empty cell for spacing
         inputPanel.add(computeButton);
 
         add(inputPanel, BorderLayout.NORTH);
@@ -40,7 +41,7 @@ public class TrapezoidalPanel extends JPanel {
         resultTable = new JTable(tableModel);
         add(new JScrollPane(resultTable), BorderLayout.CENTER);
 
-        // Result label for final integral value
+        // Result label
         resultLabel = new JLabel("Approximate Integral: ");
         resultLabel.setFont(new Font("Arial", Font.BOLD, 14));
         resultLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -55,14 +56,22 @@ public class TrapezoidalPanel extends JPanel {
             double a = Double.parseDouble(aField.getText());
             double b = Double.parseDouble(bField.getText());
             int n = Integer.parseInt(nField.getText());
-            String func = functionField.getText().trim();
-
-            func = func.replace("ln(", "log(");
+            String func = functionField.getText().trim().replace("ln(", "log(");
 
             if (n <= 0 || a >= b) {
                 JOptionPane.showMessageDialog(this, "Please enter valid inputs: n > 0 and a < b.");
                 return;
             }
+
+            // Ask user for decimal precision
+            int decimalPlaces = 5;
+            String input = JOptionPane.showInputDialog(this, "Enter number of decimal places to show:", "Decimal Precision", JOptionPane.PLAIN_MESSAGE);
+            if (input != null && !input.isEmpty()) {
+                try {
+                    decimalPlaces = Integer.parseInt(input);
+                } catch (NumberFormatException ignored) {}
+            }
+            String format = "%." + decimalPlaces + "f";
 
             double h = (b - a) / n;
             double sum = 0.0;
@@ -76,19 +85,20 @@ public class TrapezoidalPanel extends JPanel {
                 double fx = expression.setVariable("x", x).evaluate();
 
                 int multiplier = (i == 0 || i == n) ? 1 : 2;
-                sum += multiplier * fx;
+                double weightedFx = multiplier * fx;
+                sum += weightedFx;
 
                 tableModel.addRow(new Object[]{
-                        i,
-                        String.format("%.5f", x),
-                        String.format("%.5f", fx),
+                        "x" + i,
+                        String.format(format, x),
+                        String.format(format, fx),
                         multiplier,
-                        String.format("%.5f", multiplier * fx)
+                        String.format(format, weightedFx)
                 });
             }
 
             double result = (h / 2) * sum;
-            resultLabel.setText(String.format("Approximate Integral: %.6f", result));
+            resultLabel.setText("Approximate Integral: " + String.format(format, result) + " sq. units");
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());

@@ -69,16 +69,23 @@ public class SimpsonPanel extends JPanel {
             func = func.replaceAll("(?<=\\d)(?=\\()", "*");   // 2(x) → 2*(x)
             func = func.replaceAll("(?<=x)(?=\\()", "*");     // x( → x*(
 
-
             if (n <= 0 || n % 3 != 0 || a >= b) {
                 JOptionPane.showMessageDialog(this, "n must be a positive multiple of 3 and a < b.");
                 return;
             }
 
+            // Ask for decimal places
+            int decimalPlaces = 5; // default
+            String input = JOptionPane.showInputDialog(this, "Enter number of decimal places to show:", "Decimal Precision", JOptionPane.PLAIN_MESSAGE);
+            if (input != null && !input.isEmpty()) {
+                try {
+                    decimalPlaces = Integer.parseInt(input);
+                } catch (NumberFormatException ignored) {}
+            }
+            String format = "%." + decimalPlaces + "f";
+
             double h = (b - a) / n;
             double sum = 0.0;
-
-            System.out.println("Processed function: " + func);
 
             for (int i = 0; i <= n; i++) {
                 double x = a + i * h;
@@ -98,22 +105,21 @@ public class SimpsonPanel extends JPanel {
                     multiplier = 3;
                 }
 
-                sum += multiplier * fx;
+                double product = multiplier * fx;
+                sum += product;
 
                 tableModel.addRow(new Object[]{
                         "x" + i,
-                        String.format("%.5f", x),
-                        String.format("%.5f", fx),
+                        String.format(format, x),
+                        String.format(format, fx),
                         multiplier,
-                        String.format("%.5f", multiplier * fx)
+                        String.format(format, product)
                 });
-
-
             }
 
-            double result = ((3*h)/8) * sum;
-            hLabel.setText(String.format("h: %.6f", h));
-            resultLabel.setText(String.format("Estimated Integral: %.6f", result) +  " sq. units");
+            double result = ((3 * h) / 8) * sum;
+            hLabel.setText("h: " + String.format(format, h));
+            resultLabel.setText("Estimated Integral: " + String.format(format, result) + " sq. units");
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
